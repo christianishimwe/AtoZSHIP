@@ -1,7 +1,10 @@
+from datetime import timedelta
 import re
 from uuid import UUID
 from fastapi import BackgroundTasks, HTTPException, status
+from fastapi_mail import MessageType
 from pwdlib import PasswordHash
+from pydantic import EmailStr
 from sqlalchemy import select
 from app.database.models import User
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,10 +49,16 @@ class UserService(BaseService):
         )
         return user
 
-    async def _get_by_email(self, email) -> User | None:
-        return await self.session.scalar(
+    async def _get_by_email(self, email) -> User:
+        user = await self.session.scalar(
             select(self.model).where(self.model.email == email)
         )
+        # if the user is not found, raise an exception
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
+        return user
 
     async def _generate_token(self, email, password) -> str | None:
         # validate the credentials
@@ -97,3 +106,41 @@ class UserService(BaseService):
         if not user or not user.email_verified:
             return False
         return True
+
+    async def send_password_reset_link(self, email: EmailStr, prefix: str):
+        # get the currently user by email
+        user = await self._get_by_email(email)
+        # get the id of the user and send it in the token
+        data = {
+            "id": str(user.id)
+        }
+        token = generate_url_safe_token(data=data, salt="password-reset")
+        # now send it in the link to the email with a template
+        await self.notification_service.send_mail_with_template(
+            recipients=[user.email],
+            subject="ShipAtoZ: Reset your password",
+            context={
+                "reset_link": f"{app_settings.APP_BASE_URL}{prefix}/password_reset_form?token={token}",
+            },
+            template_name="mail_password_reset.html"
+        )
+
+    async def reset_password(self, token: str, new_password: str):
+        # decode the token first
+        token_data = decode_url_safe_token(
+            token,
+            expiry=timedelta(days=1),
+            salt="password-reset"
+        )
+        # if token is expired or invalid
+        if not token_data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or Expired Token"
+            )
+
+        user = await self._get(UUID(token_data["id"]))
+        # now change this user's password
+        user.password_hash = password_hasher.hash(new_password)
+        # now update this user's password
+        await self._update(user)

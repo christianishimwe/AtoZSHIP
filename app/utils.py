@@ -40,16 +40,17 @@ def decode_access_token(token: str) -> dict | None:
         return None
 
 
-def generate_url_safe_token(data: dict) -> str:
+def generate_url_safe_token(data: dict, salt: str | None = None) -> str:
     # generate the token
-    return _serializer.dumps(data)
+    return _serializer.dumps(data, salt=salt)
 
 
-def decode_url_safe_token(token: str, expiry: timedelta | None = None):
+def decode_url_safe_token(token: str, expiry: timedelta | None = None, salt: str | None = None):
     try:
         return _serializer.loads(
             token,
-            max_age=int(expiry.total_seconds()) if expiry else None
+            max_age=int(expiry.total_seconds()) if expiry else None,
+            salt=salt
         )
     except (BadSignature, SignatureExpired):
         return None

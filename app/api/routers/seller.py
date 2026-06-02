@@ -1,14 +1,17 @@
 
 from typing import Annotated
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.templating import Jinja2Templates
 
 from app.api.dependencies import DeliveryPartnerDep, SellerServiceDep, get_seller_access_token
 from app.api.schemas.delivery_partner import DeliveryPartnerUpdate
 from app.database.models import Seller
 from app.database.redis import add_jti_to_blacklist
+from app.utils import TEMPLATE_DIR
 from ..schemas.seller import SellerCreate, SellerRead
+from app.config import app_settings
 
 router = APIRouter(prefix="/seller", tags=["seller"])
 
@@ -52,12 +55,36 @@ async def get_seller(id: UUID, service: SellerServiceDep):
 async def update_delivery_partner(partner_update: DeliveryPartnerUpdate, partner: DeliveryPartnerDep, service):
     pass
 
-# verify the seller's email
 
-
+# VERIFY USER EMAIL
 @router.get("/verify")
 async def verify_delivery_partner_email(token: str, service: SellerServiceDep):
     await service.verify_email(token)
     return {"detail": "Account Verified"}
 
-# email password reset link
+
+# RESET PASSWORD
+@router.get("/forgot_password")
+async def forgot_password(email: str, service: SellerServiceDep):
+    # call the function to reset password from the user service
+    await service.send_password_reset_link(email, router.prefix)
+    return {
+        "message": "successfully sent the link!, check your email"
+    }
+
+
+@router.get("/password_reset_form")
+async def get_reset_password_form(token: str, request: Request):
+    template = Jinja2Templates(directory=TEMPLATE_DIR)
+    return template.TemplateResponse(
+        request=request,
+        name="reset_password_form.html",
+        context={
+            "request_url": f"{app_settings.APP_BASE_URL}{router.prefix}/reset_password?token={token}"}
+    )
+
+
+@router.post("/reset_password")
+async def reset_password(token: str, password: Annotated[str, Form()], service: SellerServiceDep):
+    await service.reset_password(token, password)
+    return {"detail": "Password Reset Successful"}
