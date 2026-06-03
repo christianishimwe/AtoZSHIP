@@ -56,6 +56,10 @@ class Shipment(SQLModel, table=True):
         back_populates="shipments",
         sa_relationship_kwargs={"lazy": "selectin"}
     )
+    review: "Review" = Relationship(
+        back_populates="shipment",
+        sa_relationship_kwargs={"lazy": "selectin"}
+    )
 
     @property
     def status(self):
@@ -153,3 +157,27 @@ class DeliveryPartner(User, table=True):
     @property
     def current_handling_capacity(self):
         return self.max_handling_capacity - len(self.active_shipments)
+
+
+class Review(SQLModel, table=True):
+    __tablename__ = "review"
+    id: UUID = Field(
+        sa_column=Column(
+            postgresql.UUID,
+            default=uuid4,
+            primary_key=True
+        )
+    )
+    created_at: datetime = Field(
+        sa_column=Column(
+            postgresql.TIMESTAMP,
+            default=datetime.now,
+        )
+    )
+    rating: int = Field(ge=1, le=5)
+    comment: str | None = Field(default=None)
+    shipment_id: UUID = Field(foreign_key="shipment.id")
+    shipment: Shipment = Relationship(
+        back_populates="review",
+        sa_relationship_kwargs={"lazy": "selectin"}
+    )
