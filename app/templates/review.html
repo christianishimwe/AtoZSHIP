@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Rate Your Delivery</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 24px 16px;
+            background-color: #f0f0f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+        }
+
+        .card {
+            max-width: 420px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .icon-wrap {
+            background: #f2f2f2;
+            border-radius: 14px;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 20px;
+        }
+
+        /* ── Title ── */
+        h2 {
+            margin: 0 0 4px 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #888;
+            margin: 0 0 20px 0;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #efefef;
+            margin: 20px 0;
+        }
+
+        /* ── Info grid ── */
+        .info-grid {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .info-cell {
+            flex: 1;
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #111;
+        }
+
+        /* ── Star rating ── */
+        .section-label {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 12px;
+        }
+
+        .stars {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .stars input[type="radio"] {
+            display: none;
+        }
+
+        .stars label {
+            cursor: pointer;
+            font-size: 36px;
+            color: #e0e0e0;
+            transition: color 0.15s, transform 0.12s;
+            line-height: 1;
+            user-select: none;
+        }
+
+        /* fill all stars up to the hovered/checked one */
+        .stars:hover label { color: #e0e0e0; }
+        .stars label:hover,
+        .stars label:hover ~ label { color: inherit; }
+
+        .stars:hover label { color: #ffc107; }
+        .stars label:hover ~ label { color: #e0e0e0; }
+
+        /* checked state — fill from first to checked */
+        .stars input[type="radio"]:checked ~ label { color: #e0e0e0; }
+        .stars input[type="radio"]:checked + label,
+        .stars input[type="radio"]:checked ~ input:checked + label { color: #ffc107; }
+
+        /* simpler JS-driven highlight */
+        .stars label.active { color: #ffc107; }
+        .stars label:hover { transform: scale(1.15); }
+
+        /* ── Comment textarea ── */
+        textarea {
+            width: 100%;
+            border: 1.5px solid #e8e8e8;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 15px;
+            font-family: inherit;
+            color: #111;
+            resize: vertical;
+            min-height: 100px;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 20px;
+        }
+
+        textarea:focus { border-color: #111; }
+        textarea::placeholder { color: #bbb; }
+
+        /* ── Submit button ── */
+        button[type="submit"] {
+            width: 100%;
+            background: #111;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button[type="submit"]:hover { background: #333; }
+        button[type="submit"]:active { transform: scale(0.98); }
+        button[type="submit"]:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* ── Success / error states ── */
+        #result {
+            display: none;
+            text-align: center;
+            padding: 20px 0 4px;
+        }
+
+        #result .result-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        #result h3 {
+            margin: 0 0 6px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #111;
+        }
+
+        #result p {
+            margin: 0;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .error-msg {
+            background: #fff0f0;
+            color: #c62828;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                 stroke="#444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+        </div>
+        <span class="badge">Delivered</span>
+    </div>
+
+    <h2>How was your delivery?</h2>
+    <p class="subtitle">Your feedback helps us improve the experience.</p>
+
+    <!-- Info cells -->
+    <div class="info-grid">
+        <div class="info-cell">
+            <div class="info-label">Package</div>
+            <div class="info-value">{{ content }}</div>
+        </div>
+        <div class="info-cell">
+            <div class="info-label">Carrier</div>
+            <div class="info-value">{{ delivery_partner }}</div>
+        </div>
+    </div>
+
+    <hr />
+
+    <!-- Review form -->
+    <form id="review-form">
+        <div class="section-label">Your rating</div>
+
+        <!-- Stars — rendered right-to-left via flex-direction:row-reverse so CSS sibling trick works -->
+        <div class="stars" id="stars" style="flex-direction: row-reverse; justify-content: flex-end;">
+            <label data-value="5" title="5 stars">&#9733;</label>
+            <label data-value="4" title="4 stars">&#9733;</label>
+            <label data-value="3" title="3 stars">&#9733;</label>
+            <label data-value="2" title="2 stars">&#9733;</label>
+            <label data-value="1" title="1 star">&#9733;</label>
+        </div>
+        <input type="hidden" id="rating-input" name="rating" value="" />
+
+        <div class="section-label">Leave a comment <span style="color:#ccc;">(optional)</span></div>
+        <textarea id="comment-input" name="comment" placeholder="Tell us about your experience…"></textarea>
+
+        <div class="error-msg" id="error-msg"></div>
+
+        <button type="submit" id="submit-btn" disabled>Submit Review</button>
+    </form>
+
+    <!-- Success / error result panel -->
+    <div id="result">
+        <div class="result-icon" id="result-icon"></div>
+        <h3 id="result-title"></h3>
+        <p id="result-body"></p>
+    </div>
+
+</div>
+
+<script>
+    const TOKEN = "{{ token }}";
+    const starsContainer = document.getElementById("stars");
+    const ratingInput = document.getElementById("rating-input");
+    const submitBtn = document.getElementById("submit-btn");
+    const labels = Array.from(starsContainer.querySelectorAll("label"));
+
+    // Because flex-direction is row-reverse, label[0] = star 5, label[4] = star 1.
+    // data-value on each label is the canonical value.
+
+    function highlight(value) {
+        labels.forEach(lbl => {
+            lbl.style.color = parseInt(lbl.dataset.value) <= value ? "#ffc107" : "#e0e0e0";
+        });
+    }
+
+    function clearHighlight() {
+        const current = parseInt(ratingInput.value) || 0;
+        highlight(current);
+    }
+
+    labels.forEach(lbl => {
+        lbl.addEventListener("mouseenter", () => highlight(parseInt(lbl.dataset.value)));
+        lbl.addEventListener("mouseleave", clearHighlight);
+        lbl.addEventListener("click", () => {
+            ratingInput.value = lbl.dataset.value;
+            highlight(parseInt(lbl.dataset.value));
+            submitBtn.disabled = false;
+        });
+    });
+
+    document.getElementById("review-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const rating = parseInt(ratingInput.value);
+        if (!rating) return;
+
+        const comment = document.getElementById("comment-input").value.trim() || null;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting…";
+
+        const errorMsg = document.getElementById("error-msg");
+        errorMsg.style.display = "none";
+
+        try {
+            const res = await fetch(`/shipment/review?token=${encodeURIComponent(TOKEN)}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ rating, comment }),
+            });
+
+            const form = document.getElementById("review-form");
+            const result = document.getElementById("result");
+
+            if (res.ok) {
+                form.style.display = "none";
+                document.getElementById("result-icon").textContent = "🎉";
+                document.getElementById("result-title").textContent = "Thanks for your review!";
+                document.getElementById("result-body").textContent = "Your feedback has been recorded and helps us deliver a better experience.";
+                result.style.display = "block";
+            } else {
+                const data = await res.json().catch(() => ({}));
+                errorMsg.textContent = data.detail || "Something went wrong. Please try again.";
+                errorMsg.style.display = "block";
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit Review";
+            }
+        } catch {
+            const errorMsg = document.getElementById("error-msg");
+            errorMsg.textContent = "Network error. Please check your connection and try again.";
+            errorMsg.style.display = "block";
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit Review";
+        }
+    });
+</script>
+
+</body>
+</html>

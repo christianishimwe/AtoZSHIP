@@ -1,10 +1,12 @@
+from datetime import timedelta
+from typing import Annotated
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, status, Request
 from fastapi.templating import Jinja2Templates
 from app.api.dependencies import DeliveryPartnerDep, SellerDep, ShipmentServiceDep
 from app.database import models
 from app.services.shipment import ShipmentService
-from app.utils import TEMPLATE_DIR
+from app.utils import TEMPLATE_DIR, decode_access_token, decode_url_safe_token
 from ..schemas import shipment
 
 router = APIRouter(prefix="/shipment",
@@ -75,3 +77,44 @@ async def get_tracking(request: Request, id: UUID, service: ShipmentServiceDep):
         name="track.html",
         context=context
     )
+
+# SHIPMENT REVIEW
+
+
+@router.get("/review")
+async def review_shipment(request: Request, token: str, service: ShipmentServiceDep):
+    data = decode_url_safe_token(
+        token, salt="review")
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
+    shipment = await service.get(UUID(data["shipment_id"]))
+    # if this shipment already has a review
+    if shipment.review:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Shipment already reviewed"
+        )
+    context = {
+        "content": shipment.content,
+        "delivery_partner": shipment.delivery_partner.name,
+        "token": token
+    }
+    # now send the template back to the user
+    return templates.TemplateResponse(
+        request=request,
+        name="review.html",
+        context=context
+    )
+
+
+@router.post("/review", status_code=status.HTTP_201_CREATED)
+async def submit_review(token: str, review: shipment.ShipmentReview, service: ShipmentServiceDep):
+    # decode the access token
+    data = decode_url_safe_token(token, salt="review")
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
+    # use the service to do the review
+    await service.rate(UUID(data["shipment_id"]), review)

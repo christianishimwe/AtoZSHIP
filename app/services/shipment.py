@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from email.policy import HTTP
 
 from fastapi import HTTPException, status
-from app.api.schemas.shipment import ShipmentCreate, ShipmentUpdate
-from app.database.models import DeliveryPartner, Seller, Shipment, ShipmentStatus
+from app.api.schemas.shipment import ShipmentCreate, ShipmentUpdate, ShipmentReview
+from app.database.models import DeliveryPartner, Review, Seller, Shipment, ShipmentStatus
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any
 from uuid import UUID
@@ -108,3 +108,17 @@ class ShipmentService(BaseService):
         if not shipment:
             return None
         return await self._delete(shipment)
+
+    async def rate(self, shipment_id: UUID, review: ShipmentReview):
+        # check the token for what shipment to review
+        shipment = await self._get(shipment_id)
+
+        # add the review
+        shipment_review = Review(
+            **review.model_dump(),
+            shipment_id=shipment.id
+        )
+
+        # now add the review
+        self.session.add(shipment_review)
+        await self.session.commit()

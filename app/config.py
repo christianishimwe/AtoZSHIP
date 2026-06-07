@@ -26,6 +26,9 @@ class RedisSettings(BaseSettings):
 
     model_config = _base_config
 
+    def REDIS_URL(self, db: int) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{str(db)}"
+
 
 class AppSettings(BaseSettings):
     APP_BASE_URL: str = "http://localhost:8000"

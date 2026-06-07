@@ -1,3 +1,4 @@
+'''
 from fastapi import BackgroundTasks
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from fastapi_mail.schemas import NameEmail
@@ -7,8 +8,7 @@ from app.utils import TEMPLATE_DIR
 
 
 class NotificationService:
-    def __init__(self, tasks: BackgroundTasks):
-        self.tasks = tasks
+    def __init__(self):
         self.fastmail = FastMail(
             ConnectionConfig(
                 **notification_settings.model_dump(),
@@ -39,6 +39,7 @@ class NotificationService:
         context: dict,
         template_name: str
     ):
+
         self.tasks.add_task(
             self.fastmail.send_message,
             message=MessageSchema(
@@ -49,3 +50,4 @@ class NotificationService:
             ),
             template_name=template_name
         )
+'''

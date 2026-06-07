@@ -1,16 +1,15 @@
 from datetime import timedelta
 import re
 from uuid import UUID
-from fastapi import BackgroundTasks, HTTPException, status
-from fastapi_mail import MessageType
+from fastapi import HTTPException, status
 from pwdlib import PasswordHash
 from pydantic import EmailStr
 from sqlalchemy import select
 from app.database.models import User
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.notification import NotificationService
 from app.utils import decode_url_safe_token, generate_access_token, generate_url_safe_token
+from app.worker.tasks import send_mail_with_template
 
 from .base import BaseService
 from app.config import app_settings
@@ -21,10 +20,9 @@ DUMMY_HASH = password_hasher.hash("dummy_password")
 
 
 class UserService(BaseService):
-    def __init__(self, model: type[User], session: AsyncSession, tasks: BackgroundTasks):
+    def __init__(self, model: type[User], session: AsyncSession):
         self.model = model
         self.session = session
-        self.notification_service = NotificationService(tasks)
 
     async def _add_user(self, data: dict, router_prefix: str):
         user = self.model(
@@ -38,7 +36,7 @@ class UserService(BaseService):
             "id": str(user.id)
         })
         # send an email on user registration
-        await self.notification_service.send_mail_with_template(
+        send_mail_with_template.delay(
             recipients=[user.email],
             subject="Verify your email",
             context={
@@ -116,7 +114,7 @@ class UserService(BaseService):
         }
         token = generate_url_safe_token(data=data, salt="password-reset")
         # now send it in the link to the email with a template
-        await self.notification_service.send_mail_with_template(
+        send_mail_with_template.delay(
             recipients=[user.email],
             subject="ShipAtoZ: Reset your password",
             context={

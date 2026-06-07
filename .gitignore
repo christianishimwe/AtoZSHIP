@@ -4,3 +4,4 @@ venv
 *.pyc
 *.cpy
 .env
+dump.rdb

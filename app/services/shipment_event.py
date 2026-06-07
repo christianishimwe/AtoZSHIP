@@ -1,13 +1,13 @@
 from app.config import app_settings
 from app.database.models import Shipment, ShipmentEvent, ShipmentStatus
 from app.services.base import BaseService
-from app.services.notification import NotificationService
+from app.utils import generate_url_safe_token
+from app.worker.tasks import send_mail_with_template
 
 
 class ShipmnentEventService(BaseService):
-    def __init__(self, session, tasks):
+    def __init__(self, session):
         super().__init__(ShipmentEvent, session)
-        self.notification_service = NotificationService(tasks)
 
     async def add(
         self,
@@ -61,7 +61,7 @@ class ShipmnentEventService(BaseService):
         estimated = shipment.estimated_delivery.strftime("%B %d, %Y")
         match status:
             case ShipmentStatus.placed:
-                await self.notification_service.send_mail_with_template(
+                send_mail_with_template.delay(
                     recipients=[shipment.client_contact_email],
                     subject="Your order is placed",
                     context={
@@ -72,7 +72,7 @@ class ShipmnentEventService(BaseService):
                     template_name="mail_placed.html"
                 )
             case ShipmentStatus.shipped:
-                await self.notification_service.send_mail_with_template(
+                send_mail_with_template.delay(
                     recipients=[shipment.client_contact_email],
                     subject="Your order is shipped",
                     context={
@@ -84,7 +84,7 @@ class ShipmnentEventService(BaseService):
                     template_name="mail_shipped.html"
                 )
             case ShipmentStatus.in_transit:
-                await self.notification_service.send_mail_with_template(
+                await send_mail_with_template.delay(
                     recipients=[shipment.client_contact_email],
                     subject="Your order is in transit",
                     context={
@@ -97,17 +97,21 @@ class ShipmnentEventService(BaseService):
                     template_name="mail_in_transit.html"
                 )
             case ShipmentStatus.delivered:
-                await self.notification_service.send_mail_with_template(
+                # create a token that goes with the review link
+                token = generate_url_safe_token(
+                    {"shipment_id": str(shipment.id)}, salt="review")
+                await send_mail_with_template.delay(
                     recipients=[shipment.client_contact_email],
                     subject="Your order is delivered",
                     context={
                         "seller": shipment.seller.name,
                         "content": shipment.content,
+                        "review_url": f"{app_settings.APP_BASE_URL}/shipment/review?token={token}"
                     },
                     template_name="mail_delivered.html"
                 )
             case ShipmentStatus.cancelled:
-                await self.notification_service.send_mail_with_template(
+                await send_mail_with_template.delay(
                     recipients=[shipment.client_contact_email],
                     subject="Your order is cancelled",
                     context={
