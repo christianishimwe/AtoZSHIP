@@ -2,7 +2,6 @@ from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlmodel import SQLModel
 from sqlalchemy.orm import sessionmaker
 from app.config import database_settings
 
@@ -11,12 +10,6 @@ engine = create_async_engine(
     # log sql queries, this is useful for debugging and development, but should be turned off in production
     echo=True,
 )
-
-
-async def create_db_tables():
-    # create all tables
-    async with engine.begin() as connection:
-        await connection.run_sync(SQLModel.metadata.create_all)
 
 
 async def get_session():

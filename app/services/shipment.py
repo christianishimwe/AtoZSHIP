@@ -3,7 +3,7 @@ from email.policy import HTTP
 
 from fastapi import HTTPException, status
 from app.api.schemas.shipment import ShipmentCreate, ShipmentUpdate, ShipmentReview
-from app.database.models import DeliveryPartner, Review, Seller, Shipment, ShipmentStatus
+from app.database.models import DeliveryPartner, Review, Seller, Shipment, ShipmentStatus, Tag
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any
 from uuid import UUID
@@ -121,4 +121,12 @@ class ShipmentService(BaseService):
 
         # now add the review
         self.session.add(shipment_review)
+        await self.session.commit()
+
+    async def add_tag(self, shipment_id: UUID, tag: Tag):
+        shipment = await self.get(shipment_id)
+        # now get the tag list and append this new tag
+        shipment.tags.append(tag)
+        # now add the tag by refresh
+        self.session.add(shipment)
         await self.session.commit()

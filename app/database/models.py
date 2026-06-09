@@ -1,12 +1,15 @@
 from datetime import datetime
 from enum import Enum
+from turtle import back
 
+from fastapi import HTTPException, status
 from pydantic import EmailStr
-from sqlalchemy import Column
+from sqlalchemy import Column, select
 from sqlmodel import Field, Relationship, SQLModel
 from uuid import uuid4, UUID
 from sqlalchemy.dialects import postgresql
 from sqlalchemy import ARRAY, INTEGER
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class ShipmentStatus(str, Enum):
@@ -15,6 +18,36 @@ class ShipmentStatus(str, Enum):
     in_transit = "in_transit"
     delivered = "delivered"
     cancelled = "cancelled"
+
+
+class ShipmentTagLink(SQLModel, table=True):
+    __tablename__ = "shipment_tag_link"
+    shipment_id: UUID = Field(
+        foreign_key="shipment.id",
+        primary_key=True
+    )
+    tag_id: UUID = Field(
+        foreign_key="tag.id",
+        primary_key=True
+    )
+
+
+class Tag(SQLModel, table=True):
+    __tablename__ = "tag"
+    id: UUID = Field(
+        sa_column=Column(
+            postgresql.UUID,
+            default=uuid4,
+            primary_key=True
+        )
+    )
+    name: str
+    instructions: str | None = Field(default=None)
+    shipments: list["Shipment"] = Relationship(
+        back_populates="tags",
+        link_model=ShipmentTagLink,
+        sa_relationship_kwargs={"lazy": "immediate"}
+    )
 
 
 class Shipment(SQLModel, table=True):
@@ -59,6 +92,12 @@ class Shipment(SQLModel, table=True):
     review: "Review" = Relationship(
         back_populates="shipment",
         sa_relationship_kwargs={"lazy": "selectin"}
+    )
+
+    tags: list["Tag"] = Relationship(
+        back_populates="shipments",
+        link_model=ShipmentTagLink,
+        sa_relationship_kwargs={"lazy": "immediate"}
     )
 
     @property
@@ -181,3 +220,18 @@ class Review(SQLModel, table=True):
         back_populates="review",
         sa_relationship_kwargs={"lazy": "selectin"}
     )
+
+
+class OrderDetails(SQLModdel, table=True):
+    shipment_id: UUID = Field(foreign_key="shipment.id", primary_key=True)
+    product_id: UUID = Field(Foreign_key="product.id", primary_key=True)
+    product: "Product" = Relationship(
+        back_populates="order_details",
+        sa_relationship_kwargs={"lazy": "selectin"}
+    )
+    shipment: Shipment = Relationship(
+        back_populates="order_details",
+        sa_relationship_kwargs={"lazy": "selectin"}
+    )
+    quantity: int
+    order_date: datetime

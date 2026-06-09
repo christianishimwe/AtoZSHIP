@@ -1,8 +1,8 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from uuid import UUID
 from app.api.schemas.seller import SellerRead
-from app.database.models import Review, Seller, ShipmentEvent, ShipmentStatus
+from app.database.models import Review, ShipmentEvent, ShipmentStatus, Tag
 
 
 class BaseShipment(BaseModel):
@@ -12,11 +12,14 @@ class BaseShipment(BaseModel):
 
 
 class ShipmentRead(BaseShipment):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     timeline: list[ShipmentEvent]
     estimated_delivery: datetime
     seller: SellerRead
-    review: Review
+    review: Review | None
+    tags: list[Tag]
 
 
 class ShipmentCreate(BaseShipment):
@@ -34,3 +37,8 @@ class ShipmentUpdate(BaseModel):
 class ShipmentReview(BaseModel):
     rating: int = Field(ge=1, le=5)
     comment: str | None = Field(default=None)
+
+
+class ShipmentTagCreate(BaseModel):
+    shipment_id: UUID
+    tag_name: str

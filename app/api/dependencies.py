@@ -15,6 +15,7 @@ from app.services.delivery_partner import DeliveryPartnerService
 from app.services.seller import SellerService
 from app.services.shipment import ShipmentService
 from app.services.shipment_event import ShipmnentEventService
+from app.services.tag import TagService
 from app.utils import decode_access_token
 from app.core.security import oauth2_scheme_seller, oauth2_scheme_partner
 
@@ -76,6 +77,11 @@ def get_delivery_partner_service(session: SessionDep):
     return DeliveryPartnerService(session)
 
 
+def get_tag_service(session: SessionDep):
+    return TagService(session)
+
+
+TagServiceDep = Annotated[TagService, Depends(get_tag_service)]
 DeliveryPartnerServiceDep = Annotated[DeliveryPartnerService, Depends(
     get_delivery_partner_service)]
 DeliveryPartnerDep = Annotated[DeliveryPartner, Depends(get_current_partner)]

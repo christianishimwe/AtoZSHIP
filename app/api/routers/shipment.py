@@ -1,12 +1,9 @@
-from datetime import timedelta
-from typing import Annotated
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, status, Request
 from fastapi.templating import Jinja2Templates
-from app.api.dependencies import DeliveryPartnerDep, SellerDep, ShipmentServiceDep
+from app.api.dependencies import DeliveryPartnerDep, SellerDep, ShipmentServiceDep, TagServiceDep
 from app.database import models
-from app.services.shipment import ShipmentService
-from app.utils import TEMPLATE_DIR, decode_access_token, decode_url_safe_token
+from app.utils import TEMPLATE_DIR, decode_url_safe_token
 from ..schemas import shipment
 
 router = APIRouter(prefix="/shipment",
@@ -118,3 +115,23 @@ async def submit_review(token: str, review: shipment.ShipmentReview, service: Sh
         )
     # use the service to do the review
     await service.rate(UUID(data["shipment_id"]), review)
+
+# ENDPOINTS FOR SHIPMENT TAGS
+
+
+@router.post("/tag", status_code=status.HTTP_201_CREATED)
+async def add_tag(tagData: shipment.ShipmentTagCreate, shipment_service: ShipmentServiceDep, tag_service: TagServiceDep):
+    tag = await tag_service.get_by_type(tagData.tag_name)
+    await shipment_service.add_tag(tagData.shipment_id, tag)
+
+
+@router.delete("/tag", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_tag(shipment_id: UUID, tag_name: str, tag_service: TagServiceDep):
+    await tag_service.remove_tag_from_shipment(shipment_id, tag_name)
+
+# get all shipmets with a specific tag name
+
+
+@router.get("/tagged", response_model=list[shipment.ShipmentRead])
+async def get_tagged_shipments(tag_name: str, tag_service: TagServiceDep):
+    return await tag_service.get_all_shipments(tag_name)
