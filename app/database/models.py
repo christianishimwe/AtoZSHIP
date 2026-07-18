@@ -220,18 +220,3 @@ class Review(SQLModel, table=True):
         back_populates="review",
         sa_relationship_kwargs={"lazy": "selectin"}
     )
-
-
-class OrderDetails(SQLModdel, table=True):
-    shipment_id: UUID = Field(foreign_key="shipment.id", primary_key=True)
-    product_id: UUID = Field(Foreign_key="product.id", primary_key=True)
-    product: "Product" = Relationship(
-        back_populates="order_details",
-        sa_relationship_kwargs={"lazy": "selectin"}
-    )
-    shipment: Shipment = Relationship(
-        back_populates="order_details",
-        sa_relationship_kwargs={"lazy": "selectin"}
-    )
-    quantity: int
-    order_date: datetime

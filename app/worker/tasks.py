@@ -52,3 +52,9 @@ def send_mail_with_template(
         ),
         template_name=template_name
     )
+
+
+@app.task
+def add_log(log: str) -> None:
+    with open("file.log", "a") as f:
+        f.write(f"{log}\n")

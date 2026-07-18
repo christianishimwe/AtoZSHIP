@@ -12,7 +12,7 @@ templates = Jinja2Templates(TEMPLATE_DIR)
 
 
 @router.get("/", response_model=shipment.ShipmentRead)
-async def get_shipments(id: UUID, service: ShipmentServiceDep, seller: SellerDep):
+async def get_shipments(id: UUID, service: ShipmentServiceDep):
     ''''
     Notice how we used Depends to inject the database session into our endpoint, this allows us to use the session to interact with the database and perform CRUD operations on the shipments table.
     insted if we just used session = get_session(), this would be given a value at function defintion time, but
