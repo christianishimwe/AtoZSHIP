@@ -2,3 +2,5 @@ GET http://localhost:8000/shipment?id=d6a57b55-42fe-4579-971f-c2f83297e0af (307)
 GET http://localhost:8000/shipment/?id=d6a57b55-42fe-4579-971f-c2f83297e0af (200) 0.16s
 GET http://localhost:8000/shipment?id=d6a57b55-42fe-4579-971f-c2f83297e0af (307) 0.0s
 GET http://localhost:8000/shipment/?id=d6a57b55-42fe-4579-971f-c2f83297e0af (200) 0.09s
+GET http://localhost:8000/docs (200) 0.0s
+GET http://localhost:8000/openapi.json (200) 0.05s

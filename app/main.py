@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from time import perf_counter
+from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi import FastAPI, Request, Response
 from rich import panel, print
@@ -15,7 +16,16 @@ async def lifespan_handler(app: FastAPI):
     print(panel.Panel("Server stopped..", border_style="red"))
 
 
-app = FastAPI(lifespan=lifespan_handler)
+app = FastAPI(
+    lifespan=lifespan_handler,
+    title="AtoZSHIP",
+    description="An API for a shipping service that allows sellers to submit shipments and delivery partners to accept and deliver them.",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"]
+)
 
 app.include_router(master_router)
 
