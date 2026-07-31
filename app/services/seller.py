@@ -7,8 +7,7 @@ from app.api.schemas.seller import SellerCreate
 from app.database.models import Seller
 from pwdlib import PasswordHash
 from .user import UserService
-
-password_hasher = PasswordHash.recommended()
+from app.core.security import password_hasher
 # to prevent timing attacks
 DUMMY_HASH = password_hasher.hash("dummy_password")
 

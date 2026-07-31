@@ -32,6 +32,18 @@ class ShipmentTagLink(SQLModel, table=True):
     )
 
 
+class PartnerLocationLink(SQLModel, table=True):
+    __tablename__ = "partner_location_link"
+    delivery_partner_id: UUID = Field(
+        foreign_key="delivery_partner.id",
+        primary_key=True
+    )
+    location_id: int = Field(
+        foreign_key="location.zip_code",
+        primary_key=True
+    )
+
+
 class Tag(SQLModel, table=True):
     __tablename__ = "tag"
     id: UUID = Field(
@@ -174,10 +186,10 @@ class DeliveryPartner(User, table=True):
             default=datetime.now,
         )
     )
-    serviceable_zip_codes: list[int] = Field(
-        sa_column=Column(
-            ARRAY(INTEGER),
-        )
+    serviceable_locations: list["Location"] = Relationship(
+        back_populates="delivery_partners",
+        sa_relationship_kwargs={"lazy": "immediate"},
+        link_model=PartnerLocationLink
     )
     max_handling_capacity: int
     shipments: list[Shipment] = Relationship(
@@ -196,6 +208,17 @@ class DeliveryPartner(User, table=True):
     @property
     def current_handling_capacity(self):
         return self.max_handling_capacity - len(self.active_shipments)
+
+
+class Location(SQLModel, table=True):
+    __tablename__ = "location"
+    zip_code: int = Field(primary_key=True)
+    name: str | None = Field(default=None)
+    delivery_partners: list[DeliveryPartner] = Relationship(
+        back_populates="serviceable_locations",
+        sa_relationship_kwargs={"lazy": "immediate"},
+        link_model=PartnerLocationLink
+    )
 
 
 class Review(SQLModel, table=True):

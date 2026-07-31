@@ -3,7 +3,7 @@ import json
 import report
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def report_json():
     # run the geneate report function
     data = {

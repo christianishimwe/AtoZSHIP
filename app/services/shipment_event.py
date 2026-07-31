@@ -84,7 +84,7 @@ class ShipmnentEventService(BaseService):
                     template_name="mail_shipped.html"
                 )
             case ShipmentStatus.in_transit:
-                await send_mail_with_template.delay(
+                send_mail_with_template.delay(
                     recipients=[shipment.client_contact_email],
                     subject="Your order is in transit",
                     context={
@@ -100,7 +100,7 @@ class ShipmnentEventService(BaseService):
                 # create a token that goes with the review link
                 token = generate_url_safe_token(
                     {"shipment_id": str(shipment.id)}, salt="review")
-                await send_mail_with_template.delay(
+                send_mail_with_template.delay(
                     recipients=[shipment.client_contact_email],
                     subject="Your order is delivered",
                     context={
@@ -111,7 +111,7 @@ class ShipmnentEventService(BaseService):
                     template_name="mail_delivered.html"
                 )
             case ShipmentStatus.cancelled:
-                await send_mail_with_template.delay(
+                send_mail_with_template.delay(
                     recipients=[shipment.client_contact_email],
                     subject="Your order is cancelled",
                     context={
