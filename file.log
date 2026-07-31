@@ -212,3 +212,5 @@ GET http://test/shipment/?id=d9b6df38-badd-48d6-8456-8c7c7c2dda0b (200) 0.01s
 POST http://test/partner/login (200) 0.04s
 PATCH http://test/shipment/?id=d9b6df38-badd-48d6-8456-8c7c7c2dda0b (200) 0.01s
 GET http://test/shipment/cancel?id=d9b6df38-badd-48d6-8456-8c7c7c2dda0b (200) 0.0s
+GET http://localhost:8000/ (200) 0.0s
+GET http://localhost:8000/favicon.ico (404) 0.0s
