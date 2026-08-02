@@ -5,3 +5,6 @@ venv
 *.cpy
 .env
 dump.rdb
+env.txt
+/postgres_data
+/redis_data

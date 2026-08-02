@@ -1,13 +1,3 @@
-FROM python:3.13
+FROM postgres:18.4
 
-WORKDIR /app
-
-RUN pip install --no-cache-dir Faker
-
-COPY main.py .
-
-COPY other.py .
-
-
-
-CMD [ "python", "/app/main.py" ]
+EXPOSE 5432

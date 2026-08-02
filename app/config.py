@@ -8,7 +8,6 @@ _base_config = SettingsConfigDict(
 
 
 class DatabaseSettings(BaseSettings):
-    POSTGRES_URL: str
     POSTGRES_SERVER: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
@@ -18,6 +17,10 @@ class DatabaseSettings(BaseSettings):
     JWT_ALGORITHM: str
 
     model_config = _base_config
+
+    @property
+    def POSTGRES_URL(self):
+        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
 
 class RedisSettings(BaseSettings):
